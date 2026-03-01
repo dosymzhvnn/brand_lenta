@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Download, Send } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -20,28 +20,14 @@ export default function App() {
   const [className, setClassName] = useState('');
   const [color, setColor] = useState(COLORS[0]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [containerWidth, setContainerWidth] = useState(0);
 
   const imageRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      setContainerWidth(entries[0].contentRect.width);
-    });
-    observer.observe(containerRef.current);
-    setContainerWidth(containerRef.current.getBoundingClientRect().width);
-    return () => observer.disconnect();
-  }, []);
 
   const handleGeneratePDF = async () => {
     if (!imageRef.current) return;
     setIsGenerating(true);
 
     try {
-      await document.fonts.ready; // Ensure fonts are loaded for accurate rendering
-      
       const img = imageRef.current;
       
       // Create an off-screen container with natural image dimensions
@@ -68,13 +54,12 @@ export default function App() {
       colorDiv.style.position = 'absolute';
       colorDiv.style.width = '100%';
       colorDiv.style.textAlign = 'center';
-      colorDiv.style.top = '42.8%';
+      colorDiv.style.top = '42.3%';
       colorDiv.style.transform = 'translateY(-50%)';
       colorDiv.style.fontFamily = '"Playfair Display", Georgia, serif';
       colorDiv.style.fontStyle = 'italic';
       colorDiv.style.fontWeight = '600';
-      colorDiv.style.fontSize = `${img.naturalWidth * 0.045}px`;
-      colorDiv.style.lineHeight = '1';
+      colorDiv.style.fontSize = `${img.naturalWidth * 0.042}px`;
       colorDiv.style.color = '#141414';
       container.appendChild(colorDiv);
 
@@ -89,8 +74,7 @@ export default function App() {
       classDiv.style.fontFamily = '"Playfair Display", Georgia, serif';
       classDiv.style.fontStyle = 'italic';
       classDiv.style.fontWeight = '600';
-      classDiv.style.fontSize = `${img.naturalWidth * 0.045}px`;
-      classDiv.style.lineHeight = '1';
+      classDiv.style.fontSize = `${img.naturalWidth * 0.042}px`;
       classDiv.style.color = '#141414';
       container.appendChild(classDiv);
 
@@ -100,13 +84,12 @@ export default function App() {
       schoolDiv.style.position = 'absolute';
       schoolDiv.style.width = '100%';
       schoolDiv.style.textAlign = 'center';
-      schoolDiv.style.top = '57.5%';
+      schoolDiv.style.top = '57.0%';
       schoolDiv.style.transform = 'translateY(-50%)';
       schoolDiv.style.fontFamily = '"Playfair Display", Georgia, serif';
       schoolDiv.style.fontStyle = 'italic';
       schoolDiv.style.fontWeight = '600';
       schoolDiv.style.fontSize = `${img.naturalWidth * 0.038}px`;
-      schoolDiv.style.lineHeight = '1';
       schoolDiv.style.color = '#141414';
       container.appendChild(schoolDiv);
 
@@ -131,33 +114,29 @@ export default function App() {
 
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, img.naturalWidth, img.naturalHeight);
       
-      // Improved download for mobile (iOS/Android) using Web Share API
-      const pdfBlob = pdf.output('blob');
-      const fileName = 'BrandLenta_Certificate.pdf';
-      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Сертификат Brand Lenta',
-          });
-          return; // Success, exit early
-        } catch (shareError) {
-          console.log('Share cancelled or failed:', shareError);
-          // Fallback to standard download if share fails
-        }
-      }
-
-      // Standard download fallback
-      const url = URL.createObjectURL(pdfBlob);
+      // Improved download for mobile and desktop
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      let url;
       const link = document.createElement('a');
+      
+      if (isIOS) {
+        // Force native download prompt on iOS with specific filename
+        const pdfArrayBuffer = pdf.output('arraybuffer');
+        const blob = new Blob([pdfArrayBuffer], { type: 'application/octet-stream' });
+        url = URL.createObjectURL(blob);
+        link.download = 'sertificat.pdf';
+      } else {
+        const pdfBlob = pdf.output('blob');
+        url = URL.createObjectURL(pdfBlob);
+        link.download = 'BrandLenta_Certificate.pdf';
+      }
+      
       link.href = url;
-      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -266,10 +245,7 @@ export default function App() {
                 Предпросмотр
               </h2>
               
-              <div 
-                ref={containerRef}
-                className="relative w-full max-w-2xl mx-auto shadow-xl rounded-sm overflow-hidden bg-stone-100 mt-8"
-              >
+              <div className="relative w-full max-w-2xl mx-auto shadow-xl rounded-sm overflow-hidden bg-stone-100 mt-8">
                 {/* Template Image */}
                 <img 
                   ref={imageRef}
@@ -289,9 +265,8 @@ export default function App() {
                   <div 
                     className="absolute w-full text-center font-serif italic text-stone-800 font-semibold"
                     style={{ 
-                      top: '42.8%', 
-                      fontSize: `${containerWidth * 0.045}px`,
-                      lineHeight: 1,
+                      top: '42.3%', 
+                      fontSize: 'clamp(14px, 4.2vw, 34px)',
                       transform: 'translateY(-50%)'
                     }}
                   >
@@ -301,8 +276,7 @@ export default function App() {
                     className="absolute w-full text-center font-serif italic text-stone-800 font-semibold"
                     style={{ 
                       top: '49.8%', 
-                      fontSize: `${containerWidth * 0.045}px`,
-                      lineHeight: 1,
+                      fontSize: 'clamp(14px, 4.2vw, 34px)',
                       transform: 'translateY(-50%)'
                     }}
                   >
@@ -311,9 +285,8 @@ export default function App() {
                   <div 
                     className="absolute w-full text-center font-serif italic text-stone-800 font-semibold"
                     style={{ 
-                      top: '57.5%', 
-                      fontSize: `${containerWidth * 0.038}px`,
-                      lineHeight: 1,
+                      top: '57.0%', 
+                      fontSize: 'clamp(12px, 3.8vw, 30px)',
                       transform: 'translateY(-50%)'
                     }}
                   >
