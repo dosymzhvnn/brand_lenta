@@ -54,7 +54,7 @@ export default function App() {
       colorDiv.style.position = 'absolute';
       colorDiv.style.width = '100%';
       colorDiv.style.textAlign = 'center';
-      colorDiv.style.top = '43.2%';
+      colorDiv.style.top = '42.8%';
       colorDiv.style.transform = 'translateY(-50%)';
       colorDiv.style.fontFamily = '"Playfair Display", Georgia, serif';
       colorDiv.style.fontStyle = 'italic';
@@ -63,13 +63,13 @@ export default function App() {
       colorDiv.style.color = '#141414';
       container.appendChild(colorDiv);
 
-      // Add Class and School text
+      // Add Class text
       const classDiv = document.createElement('div');
-      classDiv.innerText = `${className} ${school}`.trim();
+      classDiv.innerText = className;
       classDiv.style.position = 'absolute';
       classDiv.style.width = '100%';
       classDiv.style.textAlign = 'center';
-      classDiv.style.top = '50.6%';
+      classDiv.style.top = '49.8%';
       classDiv.style.transform = 'translateY(-50%)';
       classDiv.style.fontFamily = '"Playfair Display", Georgia, serif';
       classDiv.style.fontStyle = 'italic';
@@ -78,11 +78,26 @@ export default function App() {
       classDiv.style.color = '#141414';
       container.appendChild(classDiv);
 
+      // Add School text (below "оформлен в индивидуальном заказе")
+      const schoolDiv = document.createElement('div');
+      schoolDiv.innerText = school;
+      schoolDiv.style.position = 'absolute';
+      schoolDiv.style.width = '100%';
+      schoolDiv.style.textAlign = 'center';
+      schoolDiv.style.top = '57.5%';
+      schoolDiv.style.transform = 'translateY(-50%)';
+      schoolDiv.style.fontFamily = '"Playfair Display", Georgia, serif';
+      schoolDiv.style.fontStyle = 'italic';
+      schoolDiv.style.fontWeight = '600';
+      schoolDiv.style.fontSize = `${img.naturalWidth * 0.038}px`;
+      schoolDiv.style.color = '#141414';
+      container.appendChild(schoolDiv);
+
       document.body.appendChild(container);
 
       // Render to canvas
       const canvas = await html2canvas(container, {
-        scale: 1, // naturalWidth is already high res, no need to scale up
+        scale: 1, 
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff'
@@ -98,7 +113,18 @@ export default function App() {
       });
 
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, img.naturalWidth, img.naturalHeight);
-      pdf.save('BrandLenta_Certificate.pdf');
+      
+      // Improved download for mobile
+      const pdfBlob = pdf.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'BrandLenta_Certificate.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Произошла ошибка при генерации PDF.');
@@ -226,7 +252,7 @@ export default function App() {
                   <div 
                     className="absolute w-full text-center font-serif italic text-stone-800 font-semibold"
                     style={{ 
-                      top: '43.2%', 
+                      top: '42.8%', 
                       fontSize: 'clamp(14px, 4.2vw, 34px)',
                       transform: 'translateY(-50%)'
                     }}
@@ -236,12 +262,22 @@ export default function App() {
                   <div 
                     className="absolute w-full text-center font-serif italic text-stone-800 font-semibold"
                     style={{ 
-                      top: '50.6%', 
+                      top: '49.8%', 
                       fontSize: 'clamp(14px, 4.2vw, 34px)',
                       transform: 'translateY(-50%)'
                     }}
                   >
-                    {`${className} ${school}`.trim() || ' '}
+                    {className || ' '}
+                  </div>
+                  <div 
+                    className="absolute w-full text-center font-serif italic text-stone-800 font-semibold"
+                    style={{ 
+                      top: '57.5%', 
+                      fontSize: 'clamp(12px, 3.8vw, 30px)',
+                      transform: 'translateY(-50%)'
+                    }}
+                  >
+                    {school || ' '}
                   </div>
                 </div>
               </div>
